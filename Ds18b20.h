@@ -49,21 +49,34 @@ unsigned char Ds18b20ReadByte(){
 		i = 4;
 		while(i--);}				
 	return byte;}
+
 int Ds18b20ReadTemp(){
-	int temp = 0;
+	int tem = 0;
 	unsigned char tmh, tml;
 	Ds18b20Init();
 	Delay1ms(1);
 	Ds18b20WriteByte(0xcc);		 
-	Ds18b20WriteByte(0x44);	  
-	//Delay1ms(100); 
+	Ds18b20WriteByte(0x44);	   
 	Ds18b20Init();
 	Delay1ms(1);
 	Ds18b20WriteByte(0xcc);
 	Ds18b20WriteByte(0xbe);
 	tml = Ds18b20ReadByte();
 	tmh = Ds18b20ReadByte();
-	temp = tmh;
-	temp <<= 8;
-	temp |= tml;
-	return temp;}
+	tem = tmh;
+	tem <<= 8;
+	tem |= tml;
+	return tem;}
+
+
+
+float temParse(int tem){ 	 //将从温度传感器读到的数值转换为摄氏温度
+  float tp;  
+	tp=tem; //因为数据处理有小数点所以将温度赋给一个浮点型变量
+	tem=(tp*0.0625*100+0.5);	
+	//tp*0.0625*100 温度传感器转换成摄氏度的公示（*10的-2次方‘C）
+  //+0.5 为了弥补C语言转换时的不考虑小数，加上0.5后就是四舍五入
+	//*0.01 换成正常的摄氏温度
+
+	return tem * 0.01;
+}

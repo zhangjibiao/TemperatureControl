@@ -164,6 +164,15 @@ void showTemp(){
 	}
 }
 
+void showCurTemp(){
+	u8 i;
+	
+	setCursorPos(1,1);
+	for(i=0; i<5; i++){
+		LcdWriteData(currentTemp[i]);
+	}
+}
+
 void showTime(){
 	u8 i;
 	

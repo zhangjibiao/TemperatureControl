@@ -1,5 +1,10 @@
-*.uvproj
-*.uvopt
 *.uvgui.*
 /Listings/
 /Objects/
+*.LST
+*.OBJ
+template
+*.M51
+*.htm
+*.hex
+*.lnp

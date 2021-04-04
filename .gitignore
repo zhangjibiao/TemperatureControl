@@ -1,0 +1,5 @@
+*.uvproj
+*.uvopt
+*.uvgui.*
+/Listings/
+/Objects/

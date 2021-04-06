@@ -1,4 +1,6 @@
 sbit DSPORT=P3^7;
+float tem =0;
+float temTar;
 
 void Delay1ms(unsigned char y);
 unsigned char Ds18b20Init();

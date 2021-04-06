@@ -1,3 +1,7 @@
+#ifndef u1
+#define u1 bit
+#endif
+
 #ifndef u8
 #define u8 unsigned char
 #endif
@@ -16,8 +20,8 @@ u8 launchMsg1[]="TemControl init";
 u8 launchMsg2[]="welcome!";
 u8 currentTemp[5]="123.5";
 u8 destTemp[5]=" 89.0";
-u8 mm[]="39";
-u8 ss[]="25";
+u8 mmStr[]="00";
+u8 ssStr[]="50";
 u8 stepingIcon[]={0x00,0x00,0x00,0x00,0x03,0x04,0x08,0x10,0x00,0x01,0x02,0x04,0x18,0x00,0x00,0x00}; //步进图标
 u8 arrowRightIcon[]={0x00,0x00,0x04,0x02,0x1F,0x02,0x04,0x00}; //箭头图标
 u8 celsiusDegIcon[]={0x10,0x06,0x09,0x08,0x08,0x09,0x06,0x00}; //摄氏度'C图标
@@ -65,21 +69,11 @@ void LcdWriteData(u8 dat){ //写入数据
 }
 
 
-void LcdInit()	  { //LCD初始化程序
- 	LcdWriteCom(0x38);  //开显示
-
-	LcdWriteCom(0x0c);  //开显示不显示光标
-
-	LcdWriteCom(0x06);  //写一个指针加1
-
-	LcdWriteCom(0x01);  //清屏
-
-	LcdWriteCom(0x80);  //设置数据指针起点
-}
 
 
 
-void setCursorPos(int row, int column){ //设置光标位置
+
+void setCursorPos(char row, char column){ //设置光标位置
 	u8 cursorPos;
 	if(row==1){
 		cursorPos = column -1 + 0x80;
@@ -88,6 +82,11 @@ void setCursorPos(int row, int column){ //设置光标位置
 		cursorPos = 0x40 -1 + column + 0x80;
 	}
 	LcdWriteCom(cursorPos);
+}
+
+void setDesTemp(float temp){ //将传入的温度（浮点数）设置为目标温度
+	temTar = temp;
+	sprintf(destTemp, "%5.1f", temTar);
 }
 
 void clear(){LcdWriteCom(0x01);} //清屏
@@ -122,6 +121,11 @@ void showArrowRight(){
 	LcdWriteData(1);
 }
 
+void showHyphen(){ //显示连字符 - ，代表处于稳定状态，不加热也不降温
+	setCursorPos(1,16);
+	LcdWriteData(0x2d);
+}
+
 void showArrowUp(){
 	setCursorPos(1,16);
 	LcdWriteData(2); 
@@ -150,26 +154,23 @@ void showStepingIcon(){
 	LcdWriteData(7);
 }
 
-void showTemp(){
-	u8 i;
-	
-	setCursorPos(1,1);
-	for(i=0; i<5; i++){
-		LcdWriteData(currentTemp[i]);
-	}
-	
-	setCursorPos(1,8);
-	for(i=0; i<5; i++){
-		LcdWriteData(destTemp[i]);
-	}
-}
-
 void showCurTemp(){
 	u8 i;
 	
 	setCursorPos(1,1);
+	sprintf(currentTemp, "%5.1f", tem); //更新当前温度值
 	for(i=0; i<5; i++){
 		LcdWriteData(currentTemp[i]);
+	}
+}
+
+void showTemp(){
+	u8 i;
+	showCurTemp();
+	
+	setCursorPos(1,8);
+	for(i=0; i<5; i++){
+		LcdWriteData(destTemp[i]);
 	}
 }
 
@@ -178,12 +179,12 @@ void showTime(){
 	
 	setCursorPos(2,1);
 	for(i=0; i<2; i++){
-		LcdWriteData(mm[i]);
+		LcdWriteData(mmStr[i]);
 	}
 	
 	setCursorPos(2,4);
 	for(i=0; i<2; i++){
-		LcdWriteData(ss[i]);
+		LcdWriteData(ssStr[i]);
 	}
 }
 
@@ -201,3 +202,21 @@ void showLaunch(){ //显示启动屏
 		LcdWriteData(launchMsg2[i]);	
 	}
 }
+
+void showMsg(u8 row, u8 column, u8 msg){//传入1个字符串，显示到指定位置
+	setCursorPos(row,column);
+	LcdWriteData(msg);
+}
+
+void LcdInit()	  { //LCD初始化程序
+ 	LcdWriteCom(0x38);  //开显示
+
+	LcdWriteCom(0x0c);  //开显示不显示光标
+
+	LcdWriteCom(0x06);  //写一个指针加1
+
+	LcdWriteCom(0x01);  //清屏
+
+	LcdWriteCom(0x80);  //设置数据指针起
+}
+

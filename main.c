@@ -16,7 +16,7 @@ float Tem_old =0;
 u8 mm=0,ss=0;
 
 static  counter=0; // 放入静态区，使中断程序也能使用
-static u8 Timer1Counter;
+static Time_Point2s=0;
 static  i_CountTime=0;
 int TempVariable;
 
@@ -31,24 +31,13 @@ void stepingFun();
 void DetectTem();
 
 void setHeat(bit flag){
-	if(flag==1)
-		heat=1;
-	else
-		heat=0;
+	if(flag==1){
+		heat=0;}
+	else{
+		heat=1;}
 }
 
-void heatControl(){
-	if(tem-temTar > 0.2){ //控温，控制继电器进而控制加热板
-			showArrowDown();
-			setHeat(0);			
-		}else if(temTar-tem > 0.2){
-			showArrowUp(); 
-			setHeat(1);
-		}else {
-			showHyphen(); 
-			setHeat(0);
-		}
-}
+
 
 void init(){
 	setHeat(0); //因为串口默认是高电平，需要将其设为低电平
@@ -66,11 +55,9 @@ void init(){
 	showCelsiusDeg();
 	showArrowRight();
 	showHyphen();
-	showColonIcon();
 
 	setDesTemp(tem);
 	showTemp();
-	showTime();
 }
 void checkUpandDown(){
 	if(up==0){	//检测温度加1按键是否被按下
@@ -112,17 +99,14 @@ void checkButtons(){
 		delay(500);
 		if(steping==0) stepingFun();
 	}
-	
-	checkUpandDown();	
 }
 
 void main(){
 	init();
-	
+
 	while(1){
-		showTemp();
+		showTemp(); //温度需要更新
 		checkButtons();
-		heatControl();
 	}
 }
 
@@ -132,90 +116,96 @@ float inputTem(){
 	setCursorPos(1,8);
 	LcdWriteCom(0x0f);  //开显示、显示光标、光标闪烁
 	
-	tem1 = KeyDown();
+	tem1 = KeyDown();//输入百位数
+	while(tem1>10){
+		tem1 = KeyDown();
+	}
+	if (tem1==10){
+		tem1 = 0;
+	}
 	LcdWriteData(tem1+0x30);
 
-	tem2 = KeyDown();
+	tem2 = KeyDown();//输入十位数
+	while(tem2>10){
+		tem2 = KeyDown();
+	}
+	if (tem2==10){
+		tem2 = 0;
+	}
 	LcdWriteData(tem2+0x30);
 	
-	tem3 = KeyDown();
+	tem3 = KeyDown();//输入个位数
+	while(tem3>10){
+		tem3 = KeyDown();
+	}
+	if (tem3==10){
+		tem3 = 0;
+	}
 	LcdWriteData(tem3+0x30);
 	LcdWriteData(0x2e);
 	
-	tem4 = KeyDown();
+	tem4 = KeyDown();//输入第一位小数数
+	while(tem4>10){
+		tem4 = KeyDown();
+	}
+	if (tem4==10){
+		tem4 = 0;
+	}	
 	LcdWriteData(tem4+0x30); 
 	
 	return tem1*100 + tem2*10 + tem3 + tem4/10;
 }
 
-void setStopWatch(){
-	sprintf(mmStr, "%2.2d", mm);
-	sprintf(ssStr, "%2.2d", ss);
-}
+
 
 
 
 void temControlFun(){
 	setDesTemp(inputTem());
 	LcdWriteCom(0x0c);  //开显示、不显示光标、光标闪烁
-	//showTemp();
-	
-	//timer1Init();
-			
-		//mm=20;
-		//ss=05;
-		//setStopWatch();
-	strcpy(mmStr,"20");
-	strcpy(ssStr," 2");
-//showArrowDown();
+
 	while(1){
-		
-		if(tem-temTar > 0.2){ //控温，控制继电器进而控制加热板
-			showArrowDown(); setHeat(0);			
-		}else if(temTar-tem > 0.2){
-			showArrowUp(); setHeat(1);
-		}else showHyphen(); setHeat(0);
-		
 		showTemp();
-		checkUpandDown();
-		showTime();		
+		checkUpandDown();	
+		
+		if(tem-temTar > -0.4){ //控温，控制继电器进而控制加热板
+			showArrowDown();
+			setHeat(0);	
+		}else {
+			showArrowUp();
+			setHeat(1);
+		}
 	}
 }
 
 void stepingFun(){
-	int i_CountTime=20;
-
-	timer1Init();
-	timer0Init();
+	int desTem=floor(tem);
+	showKeyDisable();
+	showStepingIcon();
 	
-	//adjust target temperature to be integer
-	while(i_CountTime--){
-		counter=2;
-		TF0=1;
-		temTar=(int)ceil(tem)+1;}
-
-	//display target temperature
-
-			
 	while(1){
-		//waitingphase
-		heat=0;
+		//加热阶段
+		desTem += 1;
+		setDesTemp(desTem);
+		setHeat(1);	
+		showArrowUp();
+		while(tem-temTar<=0){//等待加热完成
+			showTemp();
+		}
 		
-		//maintain temperature stage
-		if(tem-temTar>-0.2)
-			heat=1;
-		if(tem-temTar>0.2)
-			heat=0;
-
-		if(i_CountTime>=1000){
-			//Heatingphase
-			heat=1;
-			temTar++;
-			
-			//display target temperature
-
-			
-			while(temTar>tem)i_CountTime=0;}}}
+		//保持温度20s
+		Time_Point2s=0;
+		showHyphen();	
+		while(Time_Point2s<=100){
+			showTemp();
+			if(tem-temTar>-0.4){
+				setHeat(0);
+			}else{
+				setHeat(1);
+			}
+		}
+	}
+}
 		
 
 
@@ -225,36 +215,15 @@ void DetectTem() interrupt 1{ //计数器0中断，计数器计完后会通知cpu执行任务，	0.2
 	TL0=0X00;
 	
 	if(counter==3){
+		Time_Point2s=Time_Point2s+1;
 		tem=temParse(Ds18b20ReadTemp());
-		counter=0;}
-}
-
-void timeAdd1s(){
-	if(ss==59){
-		ss=0;
-		mm += 1;
-		if(mm==60){
-			mm=0;
-			ss=0;
-		}
-	}else ss += 1;
+		counter=0;
+	}
 }
 
 
 
-//void Timer1() interrupt 3{ //计数器1中断，控制秒表
-//	Timer1Counter=Timer1Counter+1;
-//	//TH0=0X00;
-//	//TL0=0X00;
-//	
-//	if(counter==16){
-//		TH1=0XBD;
-//		TL1=0XC0;	
-//		timeAdd1s();
-//		setStopWatch();
-//		counter=0;		
-//	}
-//}
+
 
 
 
@@ -268,15 +237,6 @@ void timer0Init(){ //计时器0初始化
 	TR0=1;
 }
 
-void timer1Init(){ //计时器1初始化
-	TMOD=0X11;
-	TH1=0XBD;
-	TL1=0XC0;	
-	
-	EA=1;
-	ET1=1;
-	TR1=1;
-}
 
 int KeyDown(){
 	int KeyValue;   
@@ -310,7 +270,7 @@ int KeyDown(){
 		delay(100);
 		a++;}
 	
-	return KeyValue;
+	return KeyValue+1;
 }
 
 void delay(int counter){

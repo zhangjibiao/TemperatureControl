@@ -16,6 +16,9 @@ sbit LCD1602_E=P2^7;
 sbit LCD1602_RW=P2^5;
 sbit LCD1602_RS=P2^6;
 
+
+float tem =0;
+float temTar;
 u8 launchMsg1[]="TemControl init";
 u8 launchMsg2[]="welcome!";
 u8 currentTemp[5]="123.5";
@@ -136,10 +139,7 @@ void showArrowDown(){
 	LcdWriteData(3); 
 }
 
-void showColonIcon(){
-	setCursorPos(2,3);
-	LcdWriteData(4); 
-}
+
 
 void showKeyDisable(){
 	setCursorPos(2,15);
@@ -174,24 +174,6 @@ void showTemp(){
 	}
 }
 
-void showTime(){
-	u8 i;
-	
-	setCursorPos(2,1);
-	for(i=0; i<2; i++){
-		LcdWriteData(mmStr[i]);
-	}
-	
-	setCursorPos(2,4);
-	for(i=0; i<2; i++){
-		LcdWriteData(ssStr[i]);
-	}
-}
-
-
-
-
-
 void showLaunch(){ //显示启动屏
 	u8 i;
 	for(i=0;i<15;i++)	{
@@ -203,10 +185,10 @@ void showLaunch(){ //显示启动屏
 	}
 }
 
-void showMsg(u8 row, u8 column, u8 msg){//传入1个字符串，显示到指定位置
-	setCursorPos(row,column);
-	LcdWriteData(msg);
-}
+//void showMsg(u8 row, u8 column, u8 msg){//传入1个字符串，显示到指定位置
+//	setCursorPos(row,column);
+//	LcdWriteData(msg);
+//}
 
 void LcdInit()	  { //LCD初始化程序
  	LcdWriteCom(0x38);  //开显示
